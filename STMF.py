@@ -70,7 +70,7 @@ class STMF:
         Fit model parameters U, V.
         :param X:
             Data matrix of shape (m, n)
-            Unknown values are assumed to take the value of zero (0).
+            Unknown values are assumed to be masked.
         """
         start_time = time.time()
         # permute matrix A, columns minimum increasing
