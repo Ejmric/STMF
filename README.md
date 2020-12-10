@@ -1,7 +1,7 @@
 # STMF
 Sparse Tropical Matrix Factorization (STMF)
 
-STMF is a novel approach for matrix completion based on tropical matrix factorization. Please refer to Omanović A., Kazan H., Oblak P., Curk T.: Data embedding and prediction by sparse tropical matrix factorization (to appear) for the model's details.
+STMF is a novel approach for matrix completion based on tropical matrix factorization. Please refer for the model's details to Omanović, A., Kazan, H., Oblak, P. & Curk, T. Data embedding and prediction by sparse tropical matrix factorization. Preprint at http://arxiv.org/abs/2012.05210 (2020).
 
 ### Real data
 We used the real TCGA data in our experiments from the [paper by Rappoport N. and Shamir R.](https://academic.oup.com/nar/article/46/20/10546/5123392), and the data can be downloaded from the [link](http://acgt.cs.tau.ac.il/multi_omic_benchmark/download.html). Additional preprocessing before running our experiments is provided in our paper. PAM50 data can be found on the [link](https://github.com/CSB-IG/pa3bc/tree/master/bioclassifier\_R). BRCA subtypes are collected from [CBIO portal](https://www.cbioportal.org/).
