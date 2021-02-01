@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import itertools
 import matplotlib.pyplot as plt
 from sklearn.cluster.bicluster import SpectralCoclustering
 import numpy.ma as ma
@@ -26,6 +27,141 @@ from scipy.cluster.hierarchy import leaves_list
 from sklearn.metrics import mean_squared_error
 np.random.seed(0)
 random.seed(0)
+
+def plot_silh_scores(silh_trop, silh_nmf, silh_pmf, orig, title, m, location, ylabel_1, ylabel_2):
+    fig, ax1 = plt.subplots(1, 1, figsize=(6, 3), dpi=200)
+    fig.suptitle(title)
+    
+    dic_trop = silh_trop
+    labels_trop, data_trop = [*zip(*dic_trop.items())]
+    med_trop = np.median(data_trop, axis=1)
+    
+    dic_nmf = silh_nmf
+    labels_nmf, data_nmf = [*zip(*dic_nmf.items())]
+    med_nmf = np.median(data_nmf, axis=1)
+    
+    dic_pmf = silh_pmf
+    labels_pmf, data_pmf = [*zip(*dic_pmf.items())]
+    med_pmf = np.median(data_pmf, axis=1)
+    
+    y = [orig] * (m-1)
+    
+    ax1.plot(med_trop)
+    ax1.plot(med_nmf)
+    ax1.plot(med_pmf)
+    ax1.plot(y)
+    ax1.legend(['STMF', 'NMF', "PMF", "Original data"], loc='lower right')
+    ax1.set_xlabel('rank')
+    ax1.set_ylabel(ylabel_2)
+    ax1.set_xticks(np.arange(0, m-1, 1))
+    ax1.set_xticklabels(['1', '2', '3', '4', '5', "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"])
+    
+    fig.tight_layout()
+    fig.subplots_adjust(top=0.82)
+    fig.savefig(location, bbox_inches = 'tight', dpi=300);
+    
+    return
+
+def plot_diff_abs(missing, approx, param_min, param_max, location):
+    fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(8, 4))
+  
+    mask = missing.mask # True means missing elements
+    mask_missing = ~missing.mask
+    A, B = np.array(missing), np.array(approx)
+    diff = np.absolute(np.subtract(B, A))
+    
+    masked_result = ma.masked_array(diff, mask=mask)
+    diff_known = masked_result
+    
+    masked_result_missing = ma.masked_array(diff, mask=mask_missing)
+    diff_missing = masked_result_missing
+    
+    cmap = plt.cm.get_cmap('pink')
+ 
+    a = ax[0].pcolor(diff, vmin=param_min, vmax=param_max, cmap=cmap)  
+    ax[0].set_title("Difference")
+  
+    b = ax[1].pcolor(diff_known, vmin=param_min, vmax=param_max, cmap=cmap)  
+    ax[1].set_title("Known elements")
+    
+    c = ax[2].pcolor(diff_missing, vmin=param_min, vmax=param_max, cmap=cmap)  
+    ax[2].set_title("Missing elements")
+
+
+    fig.tight_layout()
+    fig.subplots_adjust(top=0.84)
+    cbar_ax = fig.add_axes([1, 0.15, 0.05, 0.6])
+    fig.colorbar(c, cax=cbar_ax)
+    plt.savefig(location, bbox_inches = 'tight', dpi=300)
+    plt.show();
+
+
+def plot_diff(missing, approx, param_min, param_max, location):
+    fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(8, 4))
+  
+    mask = missing.mask # True means missing elements
+    mask_missing = ~missing.mask
+    A, B = np.array(missing), np.array(approx)
+    diff = np.subtract(B, A)
+    
+    masked_result = ma.masked_array(diff, mask=mask)
+    diff_known = masked_result
+    
+    masked_result_missing = ma.masked_array(diff, mask=mask_missing)
+    diff_missing = masked_result_missing
+    
+    cmap = plt.cm.get_cmap('coolwarm')
+ 
+    a = ax[0].pcolor(diff, vmin=param_min, vmax=param_max, cmap=cmap)  
+    ax[0].set_title("Difference")
+  
+    b = ax[1].pcolor(diff_known, vmin=param_min, vmax=param_max, cmap=cmap)  
+    ax[1].set_title("Known elements")
+    
+    c = ax[2].pcolor(diff_missing, vmin=param_min, vmax=param_max, cmap=cmap)  
+    ax[2].set_title("Missing elements")
+
+
+    fig.tight_layout()
+    fig.subplots_adjust(top=0.84)
+    cbar_ax = fig.add_axes([1, 0.15, 0.05, 0.6])
+    fig.colorbar(c, cax=cbar_ax)
+    plt.savefig(location, bbox_inches = 'tight', dpi=300)
+    plt.show();
+    
+def plot_synth_three_methods_origmax(original, missing, trop, nmf, pmf, title, location):
+    fig, ax = plt.subplots(nrows=1, ncols=5, figsize=(12, 4))
+    fig.suptitle(title)
+    
+    min_a, max_a = np.min(original), np.max(original)
+    A, B, C, D, E = np.array(original), np.array(missing), np.array(trop), np.array(nmf), np.array(pmf)
+    final_min, final_max = min_a, max_a
+    
+    a = ax[0].pcolor(A, vmin=final_min, vmax=final_max)  # original data matrix
+    ax[0].set_title("Original")
+    
+    b = ax[1].pcolor(B, vmin=final_min, vmax=final_max)  # matrix with missing values
+    ax[1].set_title("Masked original data")
+    
+    c = ax[2].pcolor(C, vmin=final_min, vmax=final_max)  # our model
+    ax[2].set_title("STMF")
+
+    d = ax[3].pcolor(D, vmin=final_min, vmax=final_max)  # nmf
+    ax[3].set_title("NMF")
+    
+    e = ax[4].pcolor(E, vmin=final_min, vmax=final_max)  # pmf
+    ax[4].set_title("PMF")
+    
+    cmap = plt.cm.get_cmap('viridis')
+    cmap.set_over('#FFBF00')
+
+    fig.tight_layout()
+    fig.subplots_adjust(top=0.84)
+    cbar_ax = fig.add_axes([1, 0.15, 0.05, 0.6])
+    fig.colorbar(e, cax=cbar_ax, extend='max') ###############
+    
+    plt.savefig(location, bbox_inches = 'tight', dpi=300)
+    plt.show();
 
 def plot_silh(range_n_clusters, predictions, original_data, folder_name):
     cluster_labels = copy.deepcopy(predictions)
@@ -152,7 +288,7 @@ def scatter_hist_clusters(first_cluster, second_cluster, third_cluster, x, y, x_
     ax.scatter(x_nmf[first_cluster], y_nmf[first_cluster], color='red', marker='*', label='NMF', alpha=0.5)
     ax.scatter(x_nmf[second_cluster], y_nmf[second_cluster], color='red', marker='o', label='NMF', alpha=0.5)
     ax.scatter(x_nmf[third_cluster], y_nmf[third_cluster], color='red', marker='x', label='NMF', alpha=0.5)
-    #ax.legend(['STMF', 'NMF'], loc='lower left')
+    ax.legend(['STMF', 'NMF'], loc='lower left')
     ax.set_xlabel(x_title)
     ax.set_ylabel(y_title)
     # now determine nice limits by hand:
@@ -1187,6 +1323,45 @@ def create_matrix_with_missing_values(X, percentage, missing_value):
         random_row = random.randint(0, rows-1)
         random_column = random.randint(0, columns-1)
         X[random_row, random_column] = missing_value
+    return X
+
+def create_matrix_with_missing_block(X, percentage, missing_value):
+    rows = X.shape[0]
+    columns = X.shape[1]
+    elements = rows * columns
+    zero_elements = int(math.sqrt(int(percentage * elements)))
+    number_of_elements_to_be_updated = int(percentage*elements) - zero_elements**2
+    remaining_rows = number_of_elements_to_be_updated // zero_elements + 1 # number of rows
+    # select one random row and one random column
+    random_row = random.randint(0, rows-zero_elements-1-remaining_rows)
+    random_column = random.randint(0, columns-zero_elements-1)
+    for i in range(zero_elements): # getting square of missing values
+        for j in range(zero_elements):
+            X[random_row+i, random_column+j] = missing_value
+
+    j=0
+    while number_of_elements_to_be_updated > 0:
+        if number_of_elements_to_be_updated >= zero_elements:
+            for i in range(zero_elements): # fill column
+                X[random_row+i, random_column+zero_elements+j] = missing_value
+            number_of_elements_to_be_updated -= zero_elements    
+            j+=1
+        else: # last column which is not full missing
+            for i in range(number_of_elements_to_be_updated): # fill column
+                X[random_row+i, random_column+zero_elements+j] = missing_value
+                number_of_elements_to_be_updated = 0
+    return X
+
+def create_matrix_missing_block(X, percentage, missing_value):
+    rows = X.shape[0]
+    columns = X.shape[1]
+    elements = rows * columns
+    zero_elements = int(math.sqrt(int(percentage * elements))) # length of square
+    random_rows = np.random.choice(rows, size=zero_elements, replace=False)
+    random_columns = np.random.choice(columns, size=zero_elements, replace=False)
+    pairs = itertools.product(random_rows, random_columns)
+    for (i,j) in pairs:
+        X[i, j] = missing_value
     return X
 
 def check_zeros(X):
